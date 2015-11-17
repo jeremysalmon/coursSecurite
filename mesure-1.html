@@ -1,0 +1,254 @@
+<!doctype html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8" lang=""> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9" lang=""> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang=""> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Cours Sécurité des Réseaux</title>
+        <meta name="description" content="Cours de téléphonie sur IP avec Asterisk">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <style>
+            body {
+                padding-top: 50px;
+                padding-bottom: 20px;
+            }
+        </style>
+        <link rel="stylesheet" href="css/bootstrap-theme.min.css">
+        <link rel="stylesheet" href="css/main.css">
+
+        <script src="js/vendor/modernizr-2.8.3-respond-1.4.2.min.js"></script>
+    </head>
+    <body>
+        <!--[if lt IE 8]>
+            <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+      <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="index.html">Cours Sécurité</a>
+          </div>
+        </div>
+      </nav>
+
+      <div class="container-fluid">
+      	<div class="col-md-6">
+      		<img src="img/mesure1-1.jpg" class="img-responsive">
+      		<img src="img/mesure1-2.jpg" class="img-responsive">
+      		<img src="img/mesure1-3.jpg" class="img-responsive">
+      	</div>
+        <div class="col-md-6">
+         	<h2>Mesure 1</h2>
+			<h2>Installation d'un proxy</h2>
+
+			<p>Un proxy est le premier élément que nous mettrons en place pour protéger notre réseau.</p>
+			<p>Le proxy aura deux rôles</p>
+			<ul>
+				<li>Le filtrage : nous devrons faire de notre proxy un élement incontournable de notre architecture réseau. Ainsi les paquets entrants et sortants devront passer par notre proxy pour les requêtes HTTP et HTTPS.</li>
+				<li>Le cache : le proxy và nous permettre d'économiser notre bande passante en effectuant les requêtes sur Internet que si le contenu a rappatrier n'a pas encore été télécharger.</li>
+			</ul>
+			<p>Le proxy que nous installerons est <a href="http://www.squid-cache.org/" target="_BLANK">Squid</a> sur notre distribution Debian</p>
+			<p>Pour installer Squid il vous suffit d'utiliser apt-get : </p>
+			<code>apt-get install squid3</code>
+			<p><code>apt</code> và alors vous installer Squid et toutes ses dépendances et démarrer le service</p>
+			<h2>Configuration de Squid</h2>
+			<hr>
+			<p>Votre proxy est dès l'installation opérationnel. Pour le tester, vous pouvez configurer votre navigateur Internet. Dans les options de votre navigateur, choisissez "Avancé", puis "Réseau". Dans paramètres vous pourrez configurer le proxy.</p>
+			<p>Par défaut Squid écoute sur le port 3128. Vous pouvez le vérifier avec un <code>nmap localhost</code></p>
+			<p>Par défaut la configuration de Squid est très restrictive et nous interdit toute navigation</p>
+			<p>Si vous essayez de vous connectez à Internet, le serveur Squid vous renverra vers une page d'interdiction.</p>
+			<p>Les fichiers de configuration de Squid se trouve dans <code>/etc/squid3/</code>. Le fichier de configuration principal est <code>squid.conf</code></p>
+			<p>Commençons par partir d'un fichier vide : </p>
+			<code>
+				cd /etc/squid3/<br>
+				mv squid.conf<br>
+				> squid.conf
+			</code>
+			<p>Ensuite nous allons créer notre première ACL : </p>
+			<code>
+				acl estem src 10.10.221.0/24 # My lan Network<br>
+				<br>
+				acl SSL_ports port 443<br>
+				acl Safe_ports port 80          # http<br>
+				acl Safe_ports port 443         # https<br>
+				acl CONNECT method CONNECT<br>
+				
+				<br>
+				
+				http_access deny !Safe_ports<br>
+				http_access deny CONNECT !SSL_ports<br>
+				http_access allow estem<br>
+				http_access deny all<br>
+				<br>
+				http_port 3128<br>
+			</code>
+			<p>Pour que squid prenne en charge les modifications de configuration <code>/etc/init.d/squid3 restart</code></p>
+			<p>Si vous essayez de naviguer depuis une IP du réseau que vous avez autorisé c'est ok !</p>
+			<p>Nous allons maintenant interdire certains domaines. Pour celà nous allons ajouter une acl avec les autres acl, puis ajouter une règle de filtrage au début des règles de filtrage.</p>
+			<code>
+			acl ban_domains dstdomain .facebook.com .youtube.com<br>
+
+			http_access deny ban_domains<br>
+			</code>
+			<p>Rédémarrer votre Squid, vous n'avez plus accès à Facebook et Youtube !</p>
+			<h2>Gestion des sites interdits</h2>
+			<hr>
+			<p>Il est difficile de maintenir des règles pour tous les sites à mauvaises connotation.</p>
+			<p>Heureusement des volontaires font se travail et nous offre le résultat.</p>
+			<p>Squidguard nous permet de télécharger des règles de filtrage et de les appliquer dans notre Squid</p>
+			<code>apt-get install squidguard</code>
+			<p>Ceci installe les scripts de filtrage de SquidGuard <code>MAIS</code> pas les règles</p>
+			<p>Nous allons télécharger les règle d'une université Française : </p>
+			<code>
+			cd /root/<br>
+			wget http://dsi.ut-capitole.fr/blacklists/download/blacklists.tar.gz
+			</code>
+			<p>Ce fichier de règles est relativement gros (une dizaine de Mo) et contient des milliers de filtres.</p>
+			<p>Nous allons maintenant décompresser ce fichier et l'incorporer dans les règles de SquidGuard : </p>
+			<code>
+			tar -xzf blacklists.tar.gz<br>
+			cp -R blacklists/* /var/lib/squidguard/db/<br>
+			</code>
+			<p>Nous allons maintenant dire à SquidGuard qu'elles règles nous voulons utiliser : </p>
+			<code>
+			mv /etc/squidguard/squidGuard.conf /etc/squidguard/squidGuard.conf.orig
+			> /etc/squidguard.conf
+			</code>
+			<p>Le contenu de notre squidGuard.conf :</p>
+			<code>
+			#<br>
+			# CONFIG FILE FOR SQUIDGUARD<br>
+			#<br>
+			 <br>
+			dbhome /var/lib/squidguard/db<br>
+			logdir /var/log/squid3<br>
+			 <br>
+			# les règles de filtrage<br>
+			dest adult {<br>
+			        domainlist adult/domains<br>
+			        urllist adult/urls<br>
+			        expressionlist adult/very_restrictive_expression<br>
+			}<br>
+			dest publicite {<br>
+			        domainlist publicite/domains<br>
+			        urllist publicite/urls<br>
+			}<br>
+			 <br>
+			###Forcer la réécriture de https vers http pour les moteurs de recherche et pouvoir analyser les <br>mots<br>
+			rew safesearch {<br>
+			 s@(google..*/search?.*q=.*)@ &safe=active@i<br>
+			  s@(google..*/images.*q=.*)@ &safe=active@i<br>
+			 s@(google..*/groups.*q=.*)@ &safe=active@i<br>
+			  s@(google..*/news.*q=.*)@ &safe=active@i<br>
+			 s@(yandex..*/yandsearch?.*text=.*)@ &fyandex=1@i<br>
+			  s@(search.yahoo..*/search.*p=.*)@ &vm=r&v=1@i<br>
+			 s@(search.live..*/.*q=.*)@ &adlt=strict@i<br>
+			  s@(search.msn..*/.*q=.*)@ &adlt=strict@i<br>
+			 s@(.bing..*/.*q=.*)@ &adlt=strict@i<br>
+			  log block.log<br>
+			 }<br>
+			#La règle avec les interdictions: !porn !adult !publicite !violence !agressif !aggressive<br>
+			acl {<br>
+			  default {<br>
+			        pass !adult !publicite all<br>
+			        redirect  http://google.fr ##tout ce qui est inderdit est rediriger vers google<br>
+			  }<br>
+			}<br>
+			</code>
+			<p>Il nous reste maintenant à dire à Squid d'utiliser ces règles :</p>
+			<code>
+				ln -s /etc/squidguard/squidGuard.conf /etc/squid3/<br>
+				chown -R proxy:proxy  /var/log/squid3 /var/lib/squidguard<br>
+				squidGuard -C all<br>
+			</code>
+			<p>Vous devez également dire à Squid de passer par SquidGuard. Ajouter dans <code>/etc/squid3/squid.conf</code> avant <code>http_port 3128</code></p>
+			<code>
+				url_rewrite_program /usr/bin/squidGuard -c /etc/squid3/squidGuard.conf
+			</code>
+			<p>Les règles sont maintenant compilés et squidGuard est chargé.</p>
+			<h2>Faire un proxy transparent</h2>
+			<hr>
+			<p>Nous avons actuellement un problème. Si l'utilisateur ne configure pas son proxy, il và pouvoir outrepasser les règles de filtrages.</p>
+			<p>Nous allons devoir configurer un proxy TRANSPARENT</p>
+			<p>Pour celà notre serveur devra avoir deux cartes réseaux.</p>
+			<p>Il devra également devenir la passerelle de notre réseau.</p>
+			<p>Pour qu'un ordinateur Debian devienne une passerelle vous allez devoir router les paquets d'une carte réseau, vers l'autre carte réseau.</p>
+			<p>Pour celà nous devons activer le "forward" dans le noyau de notre réseau puis traiter les paquets. (eth0 est sur le réseau interne, eth1 est sur le réseau externe)</p>
+
+			<code>
+			iptables -F<br>
+			iptables -t nat -F<br>
+			iptables -t mangle -F<br>
+			iptables -X<br>
+			<br>
+			iptables -A INPUT -i lo -j ACCEPT<br>
+			iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT<br>
+			iptables -A INPUT -m state --state NEW -i ! eth1 -j ACCEPT<br>
+			iptables -A FORWARD -i eth1 -o eth0 -m state --state ESTABLISHED,RELATED -j ACCEPT<br>
+			<br>
+			iptables -A FORWARD -i eth0 -o eth1 -j ACCEPT<br>
+			iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE<br>
+			iptables -A FORWARD -i eth1 -o eth1 -j REJECT<br>
+			<br>
+			echo 1 > /proc/sys/net/ipv4/ip_forward<br>
+			</code>
+			<p>Notre machine Linux est maintenant un routeur / firewall !</p>
+			<p>Il faut maintenant lui dire que quand une requête arrive de l'intérieur pour le port HTTP (80) ou HTTPS(443) on redirige vers Squid</p>
+			
+			<code>
+				iptables -t nat -F PREROUTING<br>
+				iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 3128<br>
+			</code>
+
+			<p>Enfin il faut que Squid "sache" qu'il est transparent. Il faut ajouter à votre Squid.conf : </p>
+
+			<code>
+			httpd_accel_host virtual<br>
+    		httpd_accel_port 80<br>
+    		httpd_accel_with_proxy on<br>
+    		httpd_accel_uses_host_header on<br>
+    		httpd_accel_single_host off
+			</code>
+
+			<p class="alert alert-danger">
+				ATTENTION : la configuration ci dessous marche en HTTP. En HTTPS il faut générer des certificats SSL ...
+			</p>
+
+
+			<h2>Activation du cache</h2>
+			<p>Actuellement le rôle de cache n'est pas activé. Pour que Squid optimise votre connexion Internet ajoutez à la fin du fichier : </p>
+			<code>
+				cache_mem 128 MB<br>
+				maximum_object_size_in_memory 128 KB<br>
+				cache_replacement_policy heap GDSF<br>
+				cache_dir ufs /var/spool/squid3 15360 16 256<br>
+				maximum_object_size 32 MB<br>
+				cache_swap_low 85<br>
+				cache_swap_high 90<br>
+				access_log /var/log/squid3/access.log squid<br>
+				half_closed_clients off<br>
+				cache_mgr admin@example.com<br>
+				hosts_file /etc/hosts<br>
+				memory_pools off<br>
+				client_db off<br>
+
+			</code>
+          <p><a class="btn btn-primary btn-lg pull-right" href="exterieur.html" role="button">Continuer &raquo;</a></p>
+        </div>
+      </div>
+
+      <script src="js/vendor/jquery-1.11.2.min.js"></script>
+      <script src="js/vendor/bootstrap.min.js"></script>
+      <script src="js/main.js"></script>
+    </body>
+</html>
