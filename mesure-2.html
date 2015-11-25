@@ -1,0 +1,186 @@
+<!doctype html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang=""> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8" lang=""> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9" lang=""> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang=""> <!--<![endif]-->
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>Cours Sécurité des Réseaux</title>
+        <meta name="description" content="Cours de téléphonie sur IP avec Asterisk">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+        <link rel="stylesheet" href="css/bootstrap.min.css">
+        <style>
+            body {
+                padding-top: 50px;
+                padding-bottom: 20px;
+            }
+        </style>
+        <link rel="stylesheet" href="css/bootstrap-theme.min.css">
+        <link rel="stylesheet" href="css/main.css">
+
+        <script src="js/vendor/modernizr-2.8.3-respond-1.4.2.min.js"></script>
+    </head>
+    <body>
+        <!--[if lt IE 8]>
+            <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+      <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <div class="container">
+          <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+              <span class="sr-only">Toggle navigation</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="index.html">Cours Sécurité</a>
+          </div>
+        </div>
+      </nav>
+
+      <div class="container-fluid">
+        <div class="col-md-8 col-md-offset-2">
+         	<h2>Mesure 2</h2>
+			<h2>Mise en place d'un Firewall</h2>
+			<p>La deuxième mesure que nous devons mettre en place est un ensemble de règles sur chaque serveur pour filtrer les paquets entrants et sortants de nos différentes machines.</p>
+			<p>Le noyau de Linux intègre des fonctionnalités de pare feu réseau appelés <a href="https://fr.wikipedia.org/wiki/Netfilter" target="_blank">Netfilter</a>.</p>
+			<p>Netfilter permet de gérer les paquets IPV4, IPV6, ARP et les trames Ethernet.</p>
+			<p>Pour nos besoins de filtrage des paquets IPV4 nous allons utiliser l'outils <code>iptables</code> pour créer nos différentes règles.</p>
+			<h2>Action N°1 : tout interdire et autoriser une machine</h2>
+			<p>Nous allons mettre en place un pare feu restreignant tous les accès réseau entrants venant de l'extérieur de la machine.</p>
+			<p><code>iptables</code> vous permet d'afficher les règles présentent sur votre système. Pour afficher ces règles il vous suffit de taper (en root)</p>
+			<code>iptables -L</code>
+			<p>Vous verrez alors apparaître 3 "chaînes" qui sont configurée par défaut dans votre système.</p>
+      <img src="img/mesure-2.jpg" class="img-responsive">
+			<ul>
+				<li><code>INPUT</code> : toutes les connexions entrantes sur votre système.</li>
+				<li><code>FORWARD</code> : toutes les connexions entrantes qui transitent par votre système pour une autre machine (par exemple dans le cas d'un routeur Linux qui passe les trames d'une carte eth0 à une carte eth1.</li>
+				<li><code>OUTPUT</code> : toutes les trames qui sortent de votre système.</li>
+			</ul>
+			<p>Commencez par lancer un ping continu avec cmd de windows (<code>ping -t VOTRE_IP_LINUX</code>)</p>
+			<p>Nous allons maintenant créer une règle qui và bloquer tous les paquets entrants de la machine Linux</p>
+			<code>
+      iptables --policy INPUT DROP<br>
+      iptables --policy FORWARD DROP<br>
+      iptables --policy OUTPUT DROP<br>
+      </code>
+			<p>Vous devriez normalement voir le ping lancé depuis votre windows s'arrêter.</p>
+			<p>Nous allons maintenant créer une règle pour autoriser UNIQUEMENT votre PC Windows à se connecter (ou pinguer) votre machine Linux.</p>
+			<code>iptables -A INPUT -s VOTRE_IP_WINDOWS -j ACCEPT</code>
+      <p>Le problème ICI est que l'on accepte les connections mais les sorties sont refusées.</p>
+      <p>Nous allons autoriser toutes les sorties pour votre machine windows</p>
+      <code>iptables -A OUTPUT -d VOTRE_IP_WINDOWS -j ACCEPT</code>
+      <p>Si vous voulez supprimer toutes les règles que vous avez créé (à l'exception de la <code>POLICY</code>) vous pouvez faire <code>iptables -F -X</code></p>
+      <p>Nous devons maintenant nous assurer que les connexions persistantes (TCP) persistent</p>
+      <code>
+            iptables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT<br>
+            iptables -A OUTPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+      </code>
+      <p>Pour faire croire que votre machine est éteinte vous pouvez bloquer les ping ICMP</p>
+      <code>
+        iptables -t filter -A INPUT -p icmp -j DROP
+      </code>
+      <p>La console <code>iptables -L</code> vous permet de voir le statut de votre firewall. <code>iptables</code> lit les règles du haut vers le bas et s'arrête à la première occurence correspondant à une règle valide.</p>
+			<h2>Action N°2 : n'autoriser que les services nécessaires</h2>
+      <p>L'idéal pour un serveur est de n'autoriser en entrant et en sortie que les ports qui sont nécessaires.</p>
+      <p>Par exemple dans le cadre d'un serveur web ne seront autorisés que les ports 80, 443 et 53</p>
+      <code>
+        iptables -A OUTPUT -p tcp --dport 53 -j ACCEPT<br>
+        iptables -A OUTPUT -p udp --dport 53 -j ACCEPT<br>
+        iptables -A INPUT -p tcp --dport 53 -j ACCEPT<br>
+        iptables -A INPUT -p udp --dport 53 -j ACCEPT<br>
+      </code>
+      <p class="alert alert-success">
+        Faites la même chose pour les ports 80 et 443.
+      </p>
+      <p class="alert alert-success">
+        Flusher vos règles (-F -X) et n'autoriser le port 80 qu'a une machine et les ports 443 et 53 à tout le monde.
+      </p>
+      <h2>Supprimer des règles</h2>
+      <p>Pour faire nos règles nous avons flusher à chaque fois iptables pour recréer l'ensemble des règles.</p>
+      <p>Heureusement pendant vos tests vous pouvez supprimer des règles à la volée.</p>
+      <p>Pour supprimer une règle il suffit de taper</p>
+      <code>
+        iptables -D INPUT 1
+      </code>
+      <ul>
+        <li><code>-D </code> : indicateur de suppression</li>
+        <li><code>INPUT</code> : la chaîne</li>
+        <li><code>1</code> : la ligne dans <code>iptables -L</code> pour la chaine désirée</li>
+      </ul>
+      <h2>Faire persister nos règles au démarrage de la machine</h2>
+      <p>Pour faire persister nos règles au démarrage, il va falloir créer un script BASH et le mettre au démarrage.</p>
+      <p>Un script BASH est un script qui va executer des commandes dans l'ordre désiré.</p>
+      <code>
+        #!/bin/bash
+        echo "Demarrage du Firewall"
+        iptables --policy INPUT DROP
+        .....
+        echo "Firewall Demarre"
+      </code>
+      <p>Un script doit avoir le flag executable pour pouvoir se lancer.</p>
+      <code>
+        chmod +x monscript.sh
+      </code>
+      <p>Pour lancer un script il suffit de taper</p>
+      <code>
+        ./monscript.sh
+      </code>
+      <p>Une fois votre script validé, il faut le mettre au démarrage de la machine Debian. Debian lance tous les scripts qui sont présents dans <code>/etc/rcS.d/</code> au démarrage de la machine.</p>
+      <p>Pour que votre script se lance au démarrage il faut donc : </p>
+      <code>
+        mv monscript.sh /etc/rcS.d/S90firewall.sh<br>
+        chmod +x /etc/rcS.d/S90firewall.sh
+      </code>
+
+      <h2>Faire un router avec une machine Linux</h2>
+      <p>Vous pouvez facilement créer un routeur avec Linux et un ordinateur possédant au moins deux cartes réseaux.</p>
+      <p>Pour commencer il faut dire à votre Linux qu'il a le droit de faire passer les paquets d'une carte réseau à l'autre : </p>
+      <code>echo 1 > /proc/sys/net/ipv4/ip_forward</code>
+      <p>A partir de ce moment les paquets d'une cartes passent vers l'autre carte.</p>
+      <p>Imaginons que eth0 soit la carte connectée à votre réseau local et eth1 la carte connecté au routeur Internet</p>
+      <p>Nous allons créer le script firewall qui va faire transiter les paquets non destinés à notre réseau local vers la carte connectée à Internet</p>
+      <code>
+        iptables -F -X<br>
+<br>
+        # Autoriser les connexions qui sont déjà établies<br>
+        iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT<br>
+        iptables -A INPUT -m state --state NEW -i ! eth1 -j ACCEPT<br>
+        iptables -A FORWARD -i eth1 -o eth0 -m state --state ESTABLISHED,RELATED -j ACCEPT<br>
+<br>
+        # Autoriser les connections de l'intérieur vers l'extérieur<br>
+        iptables -A FORWARD -i eth0 -o eth1 -j ACCEPT<br>
+<br>
+        # Faire du NAT pour les connexion de l'intérieur vers l'extérieur<br>
+        iptables -t nat -A POSTROUTING -o eth1 -j MASQUERADE<br>
+<br>
+        # Rejeter toutes les connexions entrantes<br>
+        iptables -A FORWARD -i eth1 -o eth1 -j REJECT<br>
+      </code>
+
+			<p>Avec votre passerelle vous pouvez par exemple rediriger les requêtes de vos utilisateurs directement vers votre proxy squid</p>
+      <code>
+        iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to 3128
+      </code>
+
+      <p>Vous pouvez également faire de la redirection de port sur votre passerelle pour par exemple autoriser les gens de l'extérieur à se connecter : </p>
+      <code>
+        iptables -t nat -A PREROUTING -i eth1 -p tcp --dport 80 -j DNAT --to-destination 192.168.12.2:80
+      </code>
+      <ul>
+        <li>eth1 : carte connectée à Internet</li>
+        <li>80 : port web (par exemple)</li>
+        <li>192.168.12.2:80 : machine de destination des paquets 80 entrants</li>
+      </ul>
+          <p><a class="btn btn-primary btn-lg pull-right" href="mesure-3.html" role="button">Continuer &raquo;</a></p>
+        </div>
+      </div>
+
+      <script src="js/vendor/jquery-1.11.2.min.js"></script>
+      <script src="js/vendor/bootstrap.min.js"></script>
+      <script src="js/main.js"></script>
+    </body>
+</html>
