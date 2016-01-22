@@ -41,26 +41,51 @@
         </div>
       </nav>
 
-      <!-- Main jumbotron for a primary marketing message or call to action -->
-      <div class="jumbotron">
-        <div class="container">
-          <h1>Bienvenue.</h1>
-          <p>Les pages qui suivent ont pour objectif de vous faire :</p>
+      <div class="container-fluid">
+        <div class="col-md-8 col-md-offset-2">
+<?php
+session_start();
+echo('<pre>');
+print_r($_SESSION);
+echo('</pre>');
+?>
+         	<h2>Mauvaise gestion des sessions</h2>
+          
+			    <p>Les sessions permettent de conserver du côté du serveur des informations sur la session actuelle de l'utilisateur.</p>
+          <p>Généralement un cookie contient l'identifiant de la session et permet à chaque requête HTTP/HTTPS de récupérer ses informations de session.</p>
+
+          <p>Le développeur devra donc s'assurer pour protéger ses sessions que : </p>
           <ul>
-            <li>Découvrir son infrastructure de votre LAN</li>
-            <li>Découvrir l’extérieur des infrastructures extérieures</li>
-            <li>Mettre en place des mécanismes automatique de surveillance</li>
-            <li>Mettre en place un firewall sous Linux</li>
-            <li>Mettre en place un serveur Proxy</li>
-            <li>Monitorer son réseau et ses périphériques</li>
-            <li>Connaître les attaques « classiques » et s’en protéger</li>
+            <li>Toutes les transactions entre le client et le serveur sont chiffrées</li>
+            <li>S'assurer que les mécanismes de chiffrement sont à jour (voir le problème de <a href="https://fr.wikipedia.org/wiki/Heartbleed" target="_blank">Heartbleed</a></li>
+            <li>Les certificats ne doivent pas être "auto-signé" mais émané d'une autorité de certification (comme par exemple <a href="https://uk.godaddy.com" target="_blank">Go Daddy</a></li>
+            <li>Toutes les données sensibles doivent être hachées avec MD5 ou SHAx</li>
+            <li>S'assurer que les données de sessions soient bien détruites à la fin d'une connexion</li>
           </ul>
-          <p><a class="btn btn-primary btn-lg" href="reseau_d_entreprise.html.html" role="button">Démarrer &raquo;</a></p>
+          
+          <p>De la même façon les délais d'expiration doivent être réglés correctement :</p>
+          <ul>
+            <li>Le délai d'inactivité</li>
+            <li>Le temps maximal de la session</li>
+            <li>Supprimer l'ensemble de la session en cas d'authentification d'un nouvel utilisateur</li>
+          </ul>
+
+          <p><a class="btn btn-primary btn-lg pull-right" href="faille-web-3.html" role="button">Continuer &raquo;</a></p>
+          <p><a class="btn btn-danger btn-lg pull-right" id="btnDel" role="button">Supprimer le cours &raquo;</a></p>
         </div>
       </div>
 
       <script src="js/vendor/jquery-1.11.2.min.js"></script>
       <script src="js/vendor/bootstrap.min.js"></script>
       <script src="js/main.js"></script>
+      <script>
+      $(document).ready(function(){
+        var role = 'user';
+
+        if(role != 'admin'){
+          $('#btnDel').css('display','none');
+        }
+      })
+      </script>
     </body>
 </html>

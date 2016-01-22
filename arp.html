@@ -41,21 +41,20 @@
         </div>
       </nav>
 
-      <!-- Main jumbotron for a primary marketing message or call to action -->
-      <div class="jumbotron">
-        <div class="container">
-          <h1>Bienvenue.</h1>
-          <p>Les pages qui suivent ont pour objectif de vous faire :</p>
-          <ul>
-            <li>Découvrir son infrastructure de votre LAN</li>
-            <li>Découvrir l’extérieur des infrastructures extérieures</li>
-            <li>Mettre en place des mécanismes automatique de surveillance</li>
-            <li>Mettre en place un firewall sous Linux</li>
-            <li>Mettre en place un serveur Proxy</li>
-            <li>Monitorer son réseau et ses périphériques</li>
-            <li>Connaître les attaques « classiques » et s’en protéger</li>
-          </ul>
-          <p><a class="btn btn-primary btn-lg" href="reseau_d_entreprise.html.html" role="button">Démarrer &raquo;</a></p>
+      <div class="container-fluid">
+        <div class="col-md-8 col-md-offset-2">
+         	<h2>ARP Spoofing</h2>
+          <p>L'ARP Spoofing consiste a polluer la table ARP d'une cible. En polluant la table ARP, l'attaquant est capable de faire passer sa machine pour la machine de destination.</p>
+          <p>L'ARP Spoofing est par exemple le vecteur principal d'une attaque de type "Man in the Middle".</p>
+          <p>Avec la commande <code>arpspoof</code> du paquet <code>dsniff</code> de Debian vous pouvez facilement effectuer ce type d'attaque.</p>
+          <p>Par exemple vous pouvez : </p>
+          <p>Installer un serveur DNS sur votre machine</p>
+          <p>ARP Spoofé l'adresse IP du serveur DNS pour qu'une cible pense que vous etes le DNS</p>
+          <p>Configurer le DNS vers un domaine interne (ex : vers un faux site facebook)</p>
+          <p>
+            <a href="https://fr.wikipedia.org/wiki/Cross-Site_Request_Forgery" target="_blank">Source : wikipedia</a>
+          </p>
+          <p><a class="btn btn-primary btn-lg pull-right" href="arp.html" role="button">Continuer &raquo;</a></p>
         </div>
       </div>
 

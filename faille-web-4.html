@@ -41,21 +41,19 @@
         </div>
       </nav>
 
-      <!-- Main jumbotron for a primary marketing message or call to action -->
-      <div class="jumbotron">
-        <div class="container">
-          <h1>Bienvenue.</h1>
-          <p>Les pages qui suivent ont pour objectif de vous faire :</p>
+      <div class="container-fluid">
+        <div class="col-md-8 col-md-offset-2">
+         	<h2>Mauvaise gestion des accès</h2>
+          
+			    <p>Le développeur d'une application web doit bien veiller à gérer correctement les accès aux différents modules de son application.</p>
           <ul>
-            <li>Découvrir son infrastructure de votre LAN</li>
-            <li>Découvrir l’extérieur des infrastructures extérieures</li>
-            <li>Mettre en place des mécanismes automatique de surveillance</li>
-            <li>Mettre en place un firewall sous Linux</li>
-            <li>Mettre en place un serveur Proxy</li>
-            <li>Monitorer son réseau et ses périphériques</li>
-            <li>Connaître les attaques « classiques » et s’en protéger</li>
+            <li>L'idéal est de partir sur une politique ou tous les accès sont refusés</li>
+            <li>Ne pas révéler d'informations aux utilisateurs n'ayant pas l'accès. Par exemple "cacher" un bouton en javascript ou en CSS peut facilement être détourné avec Firebug ou les Chrome Dev Tools</li>
+            <li>Vérifier qu'un proxy le proxy ne met pas en cache des informations nécessaires à la gestion des autorisations</li>
+            <li>Utiliser un seul "framework" d'authentification pour toutes les briques de votre application</li>
           </ul>
-          <p><a class="btn btn-primary btn-lg" href="reseau_d_entreprise.html.html" role="button">Démarrer &raquo;</a></p>
+
+          <p><a class="btn btn-primary btn-lg pull-right" href="faille-web-5.html" role="button">Continuer &raquo;</a></p>
         </div>
       </div>
 
